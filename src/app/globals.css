@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.background-container {
+  background-image: url('/background.png');
+  background-size: cover;
+  background-position: center top;
+  height: 100vh;
+  padding: 2rem;
+  overflow: auto; 
+}
+/* Mobile devices or smaller screens */
+@media (max-width: 768px) {
+  .wallet-icon {
+    width: 15px;  
+    height: 15px;
+  }
+}
