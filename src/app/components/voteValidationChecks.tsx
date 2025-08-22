@@ -20,7 +20,7 @@ export const VoteTransactionChecks = ({
           value={isOneVote} 
         />
         <CheckItem
-          label="Is Intersect ICC credential?"
+          label="Is Tingvard CC credential?"
           tooltip={TOOLTIP_MESSAGES.HAVE_ICC_CREDENTIAL}
           value={hasICCCredentials}
         />
