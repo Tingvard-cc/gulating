@@ -90,7 +90,7 @@ export default function Home() {
                     </a>
 
                     <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "center" }}>
-                        <Typography>Version 2.0.1 - Tingvard</Typography>
+                        <Typography>Version 0.1.0 - Tingvard (forked from IntersectMBO)</Typography>
                     </Box>
                 </Box>
             </Container>
