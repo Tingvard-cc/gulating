@@ -1,8 +1,8 @@
 # Ask for help
 
-Should you have any questions or need some help in getting set up, you can use these communication channels to reach the xxxx team and get answers in a way where others can benefit from it as well:
+Should you have any questions or need some help in getting set up, you can use these communication channels to reach the team and get answers in a way where others can benefit from it as well:
 
-- Github [Discussions](https://github.com/IntersectMBO/council-toolkit-app)
+- Github [Discussions](https://github.com/Tingvard-cc/gulating)
 
 # Reporting a Vulnerability
 
