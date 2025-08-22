@@ -85,7 +85,7 @@ export default function Home() {
 
                 {/* Footer */}
                 <Box sx={{ display: "flex", alignItems: "center", width: "100%", mt: 3 }}>
-                    <a href="https://github.com/IntersectMBO/council-toolkit-app" target="_blank">
+                    <a href="https://github.com/Tingvard-cc/gulating" target="_blank">
                         <Image src="/images/github-mark.svg" alt="Logo" width={24} height={24} />
                     </a>
 
