@@ -92,7 +92,7 @@ export const isSameNetwork = (transactionBody: any, walletNetworkID: number): bo
 };
 
 /**
- * Checks if the transaction has valid Intersect Constitutional Committee (ICC) credentials.
+ * Checks if the transaction has valid credentials.
  * @param transactionBody The body of the transaction to check.
  * @param walletNetworkID The network ID of the wallet.
  * @returns {boolean} True if the transaction has valid ICC credentials, false otherwise.
@@ -118,10 +118,10 @@ export const hasValidICCCredentials = (transactionBody: any, walletNetworkID: nu
     [1]: "85c47dd4b9a2e70e88965d91dd69be182d5605b23bb5250b1c94bf64",
   };
   if (expectedScripts[walletNetworkID as 0 | 1] === scriptHex) {
-    console.log('Intersect CC Credential found in', walletNetworkID===0 ? 'testnet' : 'mainnet');
+    console.log('CC Credential found in', walletNetworkID===0 ? 'testnet' : 'mainnet');
   }
   else {
-    console.error("Incorrect Intersect CC Credentials");
+    console.error("Incorrect CC Credentials");
   }
   return expectedScripts[walletNetworkID as 0 | 1] === scriptHex;
 };
