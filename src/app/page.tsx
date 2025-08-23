@@ -149,7 +149,7 @@ export default function Home() {
 
                 {/* Footer */}
                 <Box sx={{ display: "flex", alignItems: "center", width: "100%", mt: 4, mb: 2, px: 2, py: 1, borderTop: "1px solid", borderColor: "divider" }}>
-                    <a href="https://github.com/IntersectMBO/council-toolkit-app" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit' }}>
+                    <a href="https://github.com/Tingvard-cc/gulating" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit' }}>
                         <Image src="/images/github-mark.svg" alt="GitHub" width={24} height={24} />
                         <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>View on GitHub</Typography>
                     </a>
