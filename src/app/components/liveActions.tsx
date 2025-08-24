@@ -1,7 +1,8 @@
 ﻿"use client";
 
 import { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Paper, Link } from '@mui/material';
+import { Box, Typography, CircularProgress, Paper, Link, Button, Collapse } from '@mui/material';
+import axios from 'axios';
 
 // **FIX 1: Updated the Proposal interface to match your API response**
 // The 'title' is now a direct property.
@@ -23,6 +24,9 @@ export const LiveActions = ({ onUpdate }: LiveActionsProps) => {
     const [proposals, setProposals] = useState<Proposal[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [expandedProposal, setExpandedProposal] = useState<string | null>(null);
+    const [metadataContent, setMetadataContent] = useState<any | null>(null);
+    const [isMetadataLoading, setIsMetadataLoading] = useState(false);
 
     useEffect(() => {
         const fetchGovProposals = async () => {
@@ -49,6 +53,28 @@ export const LiveActions = ({ onUpdate }: LiveActionsProps) => {
         const intervalId = setInterval(fetchGovProposals, 300000);
         return () => clearInterval(intervalId);
     }, [onUpdate]);
+
+    const handleToggleDetails = async (proposalId: string, metadataUrl?: string) => {
+        if (expandedProposal === proposalId) {
+            setExpandedProposal(null);
+            setMetadataContent(null);
+        } else {
+            setExpandedProposal(proposalId);
+            if (metadataUrl) {
+                setIsMetadataLoading(true);
+                setMetadataContent(null);
+                try {
+                    const response = await axios.get(metadataUrl);
+                    setMetadataContent(response.data);
+                } catch (e) {
+                    console.error("Failed to fetch metadata", e);
+                    setMetadataContent({ error: "Failed to fetch metadata." });
+                } finally {
+                    setIsMetadataLoading(false);
+                }
+            }
+        }
+    };
 
     if (isLoading) {
         return (
@@ -114,13 +140,27 @@ export const LiveActions = ({ onUpdate }: LiveActionsProps) => {
                     </Typography>
 
                     {proposal.metadata_url && (
-                        <Typography variant="body2" color="text.secondary">
-                            <strong>Metadata:</strong>{" "}
-                            <Link href={proposal.metadata_url} target="_blank" rel="noopener">
-                                {proposal.metadata_url}
-                            </Link>
-                        </Typography>
+                        <Box mt={1}>
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                onClick={() => handleToggleDetails(proposal.proposal_id, proposal.metadata_url)}
+                            >
+                                {expandedProposal === proposal.proposal_id ? 'Hide Details' : 'View Details'}
+                            </Button>
+                        </Box>
                     )}
+                    <Collapse in={expandedProposal === proposal.proposal_id}>
+                        <Box sx={{ p: 2, mt: 2, border: '1px solid #e0e0e0', borderRadius: 1, backgroundColor: '#f9f9f9' }}>
+                            {isMetadataLoading ? (
+                                <CircularProgress size={24} />
+                            ) : (
+                                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                                    {JSON.stringify(metadataContent, null, 2)}
+                                </pre>
+                            )}
+                        </Box>
+                    </Collapse>
                 </Paper>
             ))}
         </Box>

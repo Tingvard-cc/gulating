@@ -43,6 +43,10 @@ export async function GET(req: Request) {
     } else {
         // --- Otherwise, handle fetching proposals (your original code) ---
         try {
+            // **FIX: Fetch the current epoch number from the 'tip' endpoint**
+            const tipResponse = await axios.get('https://api.koios.rest/api/v1/tip');
+            const currentEpoch = tipResponse.data[0].epoch_no;
+
             const response = await axios.get(
                 'https://api.koios.rest/api/v1/proposal_list',
                 {
@@ -55,7 +59,8 @@ export async function GET(req: Request) {
                     p.dropped_epoch === null &&
                     p.ratified_epoch === null &&
                     p.enacted_epoch === null &&
-                    (p.expired_epoch === null || p.expired_epoch > 577) // use current epoch
+                    // **FIX: Use the dynamically fetched current epoch for filtering**
+                    (p.expired_epoch === null || p.expired_epoch > currentEpoch)
                 )
                 .map((p: any) => ({
                     title: p.meta_json?.body?.title ?? null,
