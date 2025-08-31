@@ -1,0 +1,7 @@
+{
+  "type": "TxWitness ConwayEra",
+  "description": "Key Witness ShelleyEra",
+  "govActionID": "gov_action1n5sn54mgf47a7men2ryq6ppx88kta4wvenz2qkl4f9v6ppje8easqxwm88m",
+  "voterKeyHash": "79e6a02beb8e9ee802eda0a2348c484d9e6c3fcdbee5b9fbbdb6c1bd",
+  "cborHex": "82582098b79d150ec7f6c8838fcfa8d76d14c520fb987f0575c188bec15ee92957eb965840ecb35b7c080675d4d844a88416b3ae3322868fa060d19ce92f8ab4688d09962b60ae20b7f9429a0ef4ddb67352246fe3df6ff2aa3812ee5d1f6d2f59b79c4400"
+}

@@ -1,0 +1,273 @@
+﻿"use client";
+
+import React, { useState, useEffect, useMemo } from "react";
+import { Proposal } from "./liveActions"; // type only
+
+// --- Configuration: Council member wallet hashes ---
+export const COUNCIL_MEMBERS = [
+    "79e6a02beb8e9ee802eda0a2348c484d9e6c3fcdbee5b9fbbdb6c1bd",
+    "852f9eff13ddc463148a4720d1039929833ff33b2bc2d0b6235394c2",
+    "95f2dbb992d7992e67f37dd3f656c58dd73e64a13f0b3ff96f10df4d",
+    "6689bdee85cf32858a8093da082467e2f59e3110997dacd0a149b59c",
+    "1b0239370dfb6b6a3fc873b22e6ddb865262bcce16c0a2a0697dba00",
+    "d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5",
+];
+
+// --- Type Definitions ---
+type VoteOption = "yes" | "no" | "abstain";
+type VoteStatus = VoteOption | "not-voted";
+type Votes = Record<string, VoteStatus>;
+type Outcome = "Passed" | "Failed" | "Tied" | "Pending...";
+
+// --- Props Interface ---
+interface InternalVoteProps {
+    connectedWalletAddress: string | null; // stake credential hash
+    proposals: Proposal[];
+}
+
+// --- Reusable Badge Component ---
+const VoteStatusBadge = ({ status }: { status: VoteStatus }) => {
+    const baseClasses =
+        "px-3 py-1 text-sm font-medium rounded-full text-white flex-shrink-0";
+    const statusStyles: Record<VoteStatus, string> = {
+        yes: "bg-green-500",
+        no: "bg-red-500",
+        abstain: "bg-gray-500",
+        "not-voted": "bg-yellow-400 text-gray-800",
+    };
+    return (
+        <span className={`${baseClasses} ${statusStyles[status]}`}>
+            {status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ")}
+        </span>
+    );
+};
+
+// --- The Main Voting Component ---
+export const InternalVote = ({
+    connectedWalletAddress,
+    proposals,
+}: InternalVoteProps) => {
+    const [selectedProposalId, setSelectedProposalId] = useState<string>("");
+    const [votes, setVotes] = useState<Votes>({});
+    const [outcome, setOutcome] = useState<Outcome>("Pending...");
+
+    // Set initial proposal
+    useEffect(() => {
+        if (proposals && proposals.length > 0 && !selectedProposalId) {
+            setSelectedProposalId(proposals[0].proposal_id);
+        }
+    }, [proposals, selectedProposalId]);
+
+    // Default voting state
+    const getInitialVotes = () => {
+        const initial: Votes = {};
+        COUNCIL_MEMBERS.forEach((m) => (initial[m] = "not-voted"));
+        return initial;
+    };
+
+    // Fetch votes when proposal changes
+    useEffect(() => {
+        const fetchVotes = async () => {
+            if (!selectedProposalId) return;
+            try {
+                const response = await fetch(
+                    `/api/gov-actions?proposalId=${selectedProposalId}`
+                );
+                if (!response.ok) throw new Error("Failed to fetch votes");
+                const data = await response.json();
+                setVotes(Object.keys(data).length > 0 ? data : getInitialVotes());
+            } catch (err) {
+                console.error(err);
+                setVotes(getInitialVotes());
+            }
+        };
+
+        fetchVotes();
+        const intervalId = setInterval(fetchVotes, 300000); // 5 min
+        return () => clearInterval(intervalId);
+    }, [selectedProposalId]);
+
+    const isCurrentUserCouncilMember = useMemo(
+        () =>
+            !!connectedWalletAddress &&
+            COUNCIL_MEMBERS.includes(connectedWalletAddress),
+        [connectedWalletAddress]
+    );
+
+    // Save a vote
+    const handleVote = async (vote: VoteOption) => {
+        if (!isCurrentUserCouncilMember || !connectedWalletAddress || !selectedProposalId) return;
+
+        const newVotes = { ...votes, [connectedWalletAddress]: vote };
+        setVotes(newVotes); // optimistic
+
+        try {
+            await fetch("/api/gov-actions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    proposalId: selectedProposalId,
+                    votes: newVotes,
+                }),
+            });
+        } catch (error) {
+            console.error("Failed to save vote:", error);
+            // optionally revert
+        }
+    };
+
+    // Compute outcome
+    useEffect(() => {
+        const counts = { yes: 0, no: 0, abstain: 0 };
+        Object.values(votes).forEach((v) => {
+            if (v === "yes" || v === "no" || v === "abstain") counts[v]++;
+        });
+
+        if (counts.yes === 0 && counts.no === 0 && counts.abstain === 0) {
+            setOutcome("Pending...");
+            return;
+        }
+        if (counts.yes > counts.no) setOutcome("Passed");
+        else if (counts.no > counts.yes) setOutcome("Failed");
+        else setOutcome("Tied");
+    }, [votes]);
+
+    const voteCounts = useMemo(() => {
+        const c = { yes: 0, no: 0, abstain: 0, "not-voted": 0 };
+        Object.values(votes).forEach((v) => {
+            if (c[v] !== undefined) c[v]++;
+        });
+        return c;
+    }, [votes]);
+
+    const outcomeStyles: Record<Outcome, string> = {
+        Passed: "text-green-500",
+        Failed: "text-red-500",
+        Tied: "text-gray-500",
+        "Pending...": "text-yellow-500",
+    };
+
+    const truncateHash = (hash: string, start = 6, end = 6) => {
+        if (!hash) return "";
+        return `${hash.substring(0, start)}...${hash.substring(hash.length - end)}`;
+    };
+
+    return (
+        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg w-full">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-2">
+                Internal Poll 🗳️
+            </h2>
+            <p className="text-center text-gray-500 mb-6">
+                Real-time voting for council members.
+            </p>
+
+            <div className="mb-6">
+                <label
+                    htmlFor="proposal-select"
+                    className="block text-sm font-bold text-gray-700 mb-2"
+                >
+                    Proposal:
+                </label>
+                <select
+                    id="proposal-select"
+                    value={selectedProposalId}
+                    onChange={(e) => setSelectedProposalId(e.target.value)}
+                    disabled={proposals.length === 0}
+                    className="w-full px-4 py-2 text-gray-700 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition disabled:bg-gray-200 disabled:cursor-not-allowed"
+                >
+                    {proposals.length > 0 ? (
+                        proposals.map((p) => (
+                            <option key={p.proposal_id} value={p.proposal_id}>
+                                {p.title}
+                            </option>
+                        ))
+                    ) : (
+                        <option value="" disabled>
+                            No proposals available from Live Actions
+                        </option>
+                    )}
+                </select>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <h3 className="font-bold text-lg text-gray-800 mb-3">Live Results</h3>
+                    <div className="mb-4">
+                        <span className="font-semibold text-gray-600">Outcome: </span>
+                        <span className={`font-bold text-lg ${outcomeStyles[outcome]}`}>
+                            {outcome}
+                        </span>
+                    </div>
+                    <div className="flex justify-around items-center text-center">
+                        <div>
+                            <p className="text-2xl font-bold text-green-500">{voteCounts.yes}</p>
+                            <p className="text-sm text-gray-500">Yes</p>
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold text-red-500">{voteCounts.no}</p>
+                            <p className="text-sm text-gray-500">No</p>
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold text-gray-500">{voteCounts.abstain}</p>
+                            <p className="text-sm text-gray-500">Abstain</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <h3 className="font-bold text-lg text-gray-800 mb-3">Your Vote</h3>
+                    {isCurrentUserCouncilMember ? (
+                        <div className="grid grid-cols-3 gap-2">
+                            <button
+                                onClick={() => handleVote("yes")}
+                                className="w-full py-2 px-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50 transition transform hover:scale-105"
+                            >
+                                Yes
+                            </button>
+                            <button
+                                onClick={() => handleVote("no")}
+                                className="w-full py-2 px-4 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50 transition transform hover:scale-105"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={() => handleVote("abstain")}
+                                className="w-full py-2 px-4 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50 transition transform hover:scale-105"
+                            >
+                                Abstain
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center h-full bg-yellow-100 text-yellow-800 p-3 rounded-lg">
+                            <p className="text-center font-medium">
+                                Please connect a valid council member wallet to vote.
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div>
+                <h3 className="font-bold text-lg text-gray-800 mb-3">Member Votes</h3>
+                <ul className="space-y-2">
+                    {COUNCIL_MEMBERS.map((member) => (
+                        <li
+                            key={member}
+                            className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200 gap-4"
+                        >
+                            <span className="font-mono text-sm text-gray-600 truncate" title={member}>
+                                {truncateHash(member)}
+                                {member === connectedWalletAddress && (
+                                    <span className="font-sans font-bold text-blue-600"> (You)</span>
+                                )}
+                            </span>
+                            <VoteStatusBadge status={votes[member] || "not-voted"} />
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </div>
+    );
+};
+
+export default InternalVote;
