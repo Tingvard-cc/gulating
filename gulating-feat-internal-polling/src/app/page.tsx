@@ -14,8 +14,10 @@ import {
     Skeleton,
     useMediaQuery,
     useTheme,
+    Button,
 } from "@mui/material";
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 // --- ICONS ---
 import Description from "@mui/icons-material/Description";
@@ -24,6 +26,7 @@ import Create from "@mui/icons-material/Create";
 import HelpOutline from "@mui/icons-material/HelpOutline";
 import HowToVote from "@mui/icons-material/HowToVote";
 import Build from "@mui/icons-material/Build";
+import FactCheck from "@mui/icons-material/FactCheck";
 // --- COMPONENTS ---
 import { LiveActions, Proposal } from "./components/liveActions";
 import CreateRationale from "./components/createRationale";
@@ -109,12 +112,23 @@ export default function Home() {
                         marginTop: { xs: 0, sm: "20px" },
                         padding: "20px",
                         display: "flex",
+                        flexDirection: { xs: "column", sm: "row" },
                         alignItems: "center",
-                        justifyContent: "center",
+                        justifyContent: { xs: "center", sm: "space-between" },
+                        gap: 2,
                         borderRadius: { xs: "0", sm: "8px 8px 0 0" },
                     }}
                 >
                     <Image src="/images/logo.svg" alt="Logo" width={150} height={150} />
+                    <Button
+                        component={Link}
+                        href="/metadata-verification"
+                        variant="outlined"
+                        startIcon={<FactCheck />}
+                        sx={{ mt: { xs: 2, sm: 0 } }}
+                    >
+                        Metadata Verification
+                    </Button>
                 </Box>
 
                 {/* Wallet Section */}
