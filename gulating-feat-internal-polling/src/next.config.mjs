@@ -7,7 +7,11 @@ const nextConfig = {
         "@meshsdk/core",
         "@meshsdk/core-cst",
         "@meshsdk/react",
-        "@emurgo/cardano-serialization-lib-nodejs", // ← added
+        "@emurgo/cardano-serialization-lib-nodejs",
+        "jsonld",
+        "cbor",
+        "@noble/curves",
+        "@noble/hashes",
     ],
 
     webpack: (config) => {
